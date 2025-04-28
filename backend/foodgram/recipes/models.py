@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-# Create your models here.
 class Ingredient(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название")
     measurement_unit = models.CharField(max_length=50, 
@@ -24,22 +23,6 @@ class Ingredient(models.Model):
         return f"{self.name}, {self.measurement_unit}"
 
 
-class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True, 
-                            verbose_name="Название")
-    color = models.CharField(max_length=7, unique=True, 
-                             verbose_name="Цвет в HEX")
-    slug = models.SlugField(max_length=50, unique=True, 
-                            verbose_name="Уникальный слаг")
-
-    class Meta:
-        verbose_name = "Тег"
-        verbose_name_plural = "Теги"
-
-    def __str__(self):
-        return self.name
-
-
 class Recipe(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, 
@@ -52,7 +35,6 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient, through="RecipeIngredient", verbose_name="Ингредиенты"
     )
-    tags = models.ManyToManyField(Tag, verbose_name="Теги")
     cooking_time = models.PositiveIntegerField(
         verbose_name="Время приготовления (мин)"
     )
