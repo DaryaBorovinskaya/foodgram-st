@@ -7,20 +7,23 @@ User = get_user_model()
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название")
-    measurement_unit = models.CharField(max_length=50, 
-                                        verbose_name="Единица измерения")
+    measurement_unit = models.CharField(
+        max_length=50, 
+        verbose_name="Единица измерения"
+    )
 
     class Meta:
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "measurement_unit"], name="unique_ingredient"
+                fields=["name", "measurement_unit"], 
+                name="unique_ingredient"
             )
         ]
 
     def __str__(self):
-        return f"{self.name}, {self.measurement_unit}"
+        return f"{self.name} ({self.measurement_unit})"
 
 
 class Recipe(models.Model):
@@ -33,7 +36,10 @@ class Recipe(models.Model):
     image = models.ImageField(upload_to="recipes/", verbose_name="Картинка")
     text = models.TextField(verbose_name="Описание")
     ingredients = models.ManyToManyField(
-        Ingredient, through="RecipeIngredient", verbose_name="Ингредиенты"
+        Ingredient,
+        through='RecipeIngredient',
+        through_fields=('recipe', 'ingredient'),
+        verbose_name="Ингредиенты"
     )
     cooking_time = models.PositiveIntegerField(
         verbose_name="Время приготовления (мин)"
@@ -50,6 +56,12 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def favorites_count(self):
+        """Количество добавлений в избранное"""
+        
+        return self.favorites.count() 
 
 
 class RecipeIngredient(models.Model):
@@ -78,7 +90,7 @@ class RecipeIngredient(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.ingredient} - {self.amount}"
+        return f" {self.recipe}: {self.ingredient} - {self.amount}"
 
 
 class Favorite(models.Model):
@@ -146,7 +158,7 @@ class Subscription(models.Model):
         related_name="following", 
         verbose_name="Автор"
     )
-
+ 
     class Meta:
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"

@@ -8,8 +8,30 @@ from recipes.models import (
     ShoppingCart,
     Subscription
 )
+from djoser.serializers import UserSerializer as BaseUserSerializer
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 User = get_user_model()
+
+# class CustomUserSerializer(BaseUserSerializer):
+    
+#     class Meta:
+#         model = User
+#         fields = ('email', 'id', 'username', 
+#                   'first_name', 'last_name',)
+#         read_only_fields = ('id',)
+
+#     # Оформление вывода как в API-документации
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation.pop('is_subscribed')
+#         representation.pop('avatar')
+#         return representation
+
+
+# class UserCreateSerializer(BaseUserCreateSerializer):
+#     class Meta(BaseUserCreateSerializer.Meta):
+#         fields = ('email', 'username', 'first_name', 'last_name', 'password')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,11 +40,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
+            'email',
             'id',
             'username',
-            'email',
             'first_name',
             'last_name',
+            'password',
             'is_subscribed',
             'avatar'
         )
@@ -40,6 +63,12 @@ class UserSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
+    # Оформление вывода как в API-документации
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation.pop('is_subscribed')
+        representation.pop('avatar')
+        return representation
 
 class SetPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True)

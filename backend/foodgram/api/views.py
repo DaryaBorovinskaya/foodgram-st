@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from reportlab.pdfgen import canvas
 from io import BytesIO
+from rest_framework.permissions import AllowAny
 
 
 from recipes.models import (
@@ -38,7 +39,7 @@ class StandardPagination(PageNumberPagination):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
     lookup_field = 'id'
     pagination_class = StandardPagination
 

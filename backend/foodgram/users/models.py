@@ -5,10 +5,11 @@ from django.db import models
 class User(AbstractUser):
     email = models.EmailField(
         'email address',
-        unique=True,  # делаем email уникальным
-        blank=False,  # делаем обязательным
+        unique=True, 
+        blank=False, 
         null=False
     )
+
     avatar = models.ImageField(
         'аватар',
         upload_to='avatars/',
@@ -16,10 +17,6 @@ class User(AbstractUser):
         null=True
     )
     
-    # Убираем username, если хотим использовать email для входа
-    # USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['username']  # если оставим username
-
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'

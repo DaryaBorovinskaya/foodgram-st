@@ -1,31 +1,78 @@
-# Пример из проекта api_final_yatube
+from django.urls import include, path
+from rest_framework.authtoken import views
+from rest_framework import routers
+from api.views import (
+    UserViewSet,
+    IngredientViewSet,
+    RecipeViewSet,
+    SubscriptionViewSet
+)
 
-# from django.urls import include, path
-# from api.views import CommentViewSet, GroupViewSet, 
-# PostViewSet, FollowViewSet
-# from rest_framework import routers
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet, basename='users')
+router.register(r'ingredients', IngredientViewSet, basename='ingredients')
+router.register(r'recipes', RecipeViewSet, basename='recipes')
 
+urlpatterns = [
+    path('', include(router.urls)),
+    
+    path(
+        'users/subscriptions/',
+        SubscriptionViewSet.as_view({'get': 'subscriptions'}),
+        name='subscriptions'
+    ),
+    path(
+        'users/<int:id>/subscribe/',
+        SubscriptionViewSet.as_view({'post': 'subscribe', 'delete': 'subscribe'}),
+        name='subscribe'
+    ),
+    
+    path(
+        'users/me/',
+        UserViewSet.as_view({'get': 'me'}),
+        name='me'
+    ),
+    path(
+        'users/set_password/',
+        UserViewSet.as_view({'post': 'set_password'}),
+        name='set_password'
+    ),
+    path(
+        'users/me/avatar/',
+        UserViewSet.as_view({'put': 'avatar', 'delete': 'avatar'}),
+        name='avatar'
+    ),
+    
+    path(
+        'recipes/download_shopping_cart/',
+        RecipeViewSet.as_view({'get': 'download_shopping_cart'}),
+        name='download_shopping_cart'
+    ),
+    path(
+        'recipes/<int:pk>/favorite/',
+        RecipeViewSet.as_view({'post': 'favorite', 'delete': 'favorite'}),
+        name='favorite'
+    ),
+    path(
+        'recipes/<int:pk>/shopping_cart/',
+        RecipeViewSet.as_view({'post': 'shopping_cart', 'delete': 'shopping_cart'}),
+        name='shopping_cart'
+    ),
+    path(
+        'recipes/<int:pk>/get-link/',
+        RecipeViewSet.as_view({'get': 'get_link'}),
+        name='get_link'
+    ),
 
-# router = routers.DefaultRouter()
-# router.register(r'groups', GroupViewSet)
-# router.register(r'posts', PostViewSet)
-# router.register(r'follow', FollowViewSet)
+    
 
-# urlpatterns = [
-#     path("", include(router.urls)),
-#     path(
-#         "posts/<int:post_id>/comments/",
-#         CommentViewSet.as_view({"get": "list", "post": "create"}),
-#         name="post_comments",
-#     ),
-#     path(
-#         "posts/<int:post_id>/comments/<int:pk>/",
-#         CommentViewSet.as_view(
-#             {"get": "retrieve", "put": "update", "delete": "destroy",
-#              "patch": "partial_update"}
-#         ),
-#         name="post_comment_detail",
-#     ),
-#     path('', include('djoser.urls')),
-#     path('', include('djoser.urls.jwt')),
-# ]
+    # Аутентификация
+    # Djoser создаст набор необходимых эндпоинтов.
+    # базовые, для управления пользователями в Django:
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
+    # # JWT-эндпоинты, для управления JWT-токенами:
+    # path('auth/', include('djoser.urls.jwt')),
+
+    # path('api-token-auth/', views.obtain_auth_token),
+]
