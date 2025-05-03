@@ -7,6 +7,8 @@ from api.views import (
     RecipeViewSet,
     SubscriptionViewSet
 )
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='users')
@@ -67,12 +69,6 @@ urlpatterns = [
     
 
     # Аутентификация
-    # Djoser создаст набор необходимых эндпоинтов.
-    # базовые, для управления пользователями в Django:
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    # # JWT-эндпоинты, для управления JWT-токенами:
-    # path('auth/', include('djoser.urls.jwt')),
-
-    # path('api-token-auth/', views.obtain_auth_token),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

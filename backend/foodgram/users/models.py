@@ -12,9 +12,23 @@ class User(AbstractUser):
 
     avatar = models.ImageField(
         'аватар',
-        upload_to='avatars/',
+        upload_to='users/',
         blank=True,
         null=True
+    )
+
+    first_name = models.CharField(
+        'first name',
+        max_length=150,
+        blank=False,  
+        null=False   
+    )
+    
+    last_name = models.CharField(
+        'last name',
+        max_length=150,
+        blank=False,  
+        null=False    
     )
     
     class Meta:

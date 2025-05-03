@@ -4,12 +4,10 @@ from django.db.models import Sum
 from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
+from .pagination import StandardPagination
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from rest_framework.permissions import AllowAny
-
-
 from recipes.models import (
     User,
     Ingredient,
@@ -22,18 +20,13 @@ from recipes.models import (
 from .serializers import (UserSerializer, IngredientSerializer,
                           RecipeSerializer, ShortRecipeSerializer,
                           SubscriptionSerializer, SetPasswordSerializer,
-                          SetAvatarSerializer)
+                          AvatarSerializer)
 from .permissions import (
     IsAuthorOrReadOnlyPermission,
     IsSubscriberOrReadOnlyPermission,
     IsAdminOrReadOnlyPermission
 )
-
-
-class StandardPagination(PageNumberPagination):
-    page_size = 6
-    page_size_query_param = 'limit'
-    max_page_size = 24
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -61,43 +54,68 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['put', 'delete'], 
-            permission_classes=[permissions.IsAuthenticated],
-            serializer_class=SetAvatarSerializer)
+            permission_classes=[permissions.IsAuthenticated])
     def avatar(self, request):
-        if request.method == 'PUT':
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            request.user.avatar = serializer.validated_data['avatar']
-            request.user.save()
+        try:
+            if not request.user.is_authenticated:
+                return Response(
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+
+            if request.method == 'PUT':
+                serializer = AvatarSerializer(data=request.data, context={'request': request})
+                serializer.is_valid(raise_exception=True)
+                user = serializer.update(request.user, serializer.validated_data)
+                avatar_url = user.avatar.url if user.avatar else None
+                response = Response(
+                    {
+                        'avatar': request.build_absolute_uri(avatar_url) if avatar_url else None
+                    },
+                    status=status.HTTP_200_OK
+                )
+            
+            elif request.method == 'DELETE':
+                user = request.user
+                if user.avatar: 
+                    user.avatar.delete()
+                    user.avatar = None
+                    user.save()
+                avatar_url = None
+                response = Response(
+                    status=status.HTTP_204_NO_CONTENT
+                )
+            
+            return response
+            
+        except Exception as e:
             return Response(
-                {'avatar': request.user.avatar.url},
-                status=status.HTTP_200_OK
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        
-        request.user.avatar.delete()
-        request.user.avatar = None
-        request.user.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    # def list(self, request, *args, **kwargs):
+    #     return super().list(request, *args, **kwargs)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [IsAdminOrReadOnlyPermission]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['^name']
+    permission_classes = (AllowAny,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields  = ('name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.select_related('author').prefetch_related(
-        'tags', 'recipe_ingredients__ingredient'
+        'recipe_ingredients__ingredient'
     )
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthorOrReadOnlyPermission]
-    pagination_class = StandardPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'tags__name', 'author__username']
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter)
+    search_fields = ('name', 'author__username')
     ordering_fields = ['pub_date', 'cooking_time']
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -213,7 +231,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
     permission_classes = [IsSubscriberOrReadOnlyPermission]
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
