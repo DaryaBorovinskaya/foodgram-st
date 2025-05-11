@@ -5,6 +5,7 @@ from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .pagination import StandardPagination
+from rest_framework.permissions import IsAuthenticated
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from rest_framework.permissions import AllowAny
@@ -21,11 +22,8 @@ from .serializers import (UserSerializer, IngredientSerializer,
                           RecipeSerializer, ShortRecipeSerializer,
                           SubscriptionSerializer, SetPasswordSerializer,
                           AvatarSerializer)
-from .permissions import (
-    IsAuthorOrReadOnlyPermission,
-    IsSubscriberOrReadOnlyPermission,
-    IsAdminOrReadOnlyPermission
-)
+from .permissions import IsAuthorOrReadOnlyPermission
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 
@@ -62,7 +60,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
 
-
             if request.method == 'PUT':
                 serializer = AvatarSerializer(data=request.data, context={'request': request})
                 serializer.is_valid(raise_exception=True)
@@ -94,8 +91,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
     
-    # def list(self, request, *args, **kwargs):
-    #     return super().list(request, *args, **kwargs)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -121,15 +116,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         
-        # Фильтрация по избранному 
         if self.request.query_params.get('is_favorited') == '1':
-            queryset = queryset.filter(favorites__user=user)
+            if user.is_authenticated:
+                queryset = queryset.filter(favorites__user=user)
+            else:
+                queryset = queryset.none()
         
-        # Фильтрация по списку покупок 
         if self.request.query_params.get('is_in_shopping_cart') == '1':
-            queryset = queryset.filter(shopping_cart__user=user)
+            if user.is_authenticated:
+                queryset = queryset.filter(shopping_cart__user=user)
+            else:
+                queryset = queryset.none()
         
-        # Фильтрация по автору
         author_id = self.request.query_params.get('author')
         if author_id:
             queryset = queryset.filter(author_id=author_id)
@@ -230,7 +228,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
     serializer_class = SubscriptionSerializer
-    permission_classes = [IsSubscriberOrReadOnlyPermission]
+    permission_classes = [IsAuthenticated]  
+    pagination_class = StandardPagination
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
@@ -242,30 +241,36 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, methods=['post', 'delete'], 
-            permission_classes=[permissions.IsAuthenticated])
-    def subscribe(self, request, id=None):
-        author = get_object_or_404(User, id=id)
-        if request.method == 'POST':
-            if Subscription.objects.filter(user=request.user, following=author).exists():
-                return Response(
-                    {'detail': 'Вы уже подписаны на этого пользователя.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if request.user == author:
-                return Response(
-                    {'detail': 'Нельзя подписаться на самого себя.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            subscription = Subscription.objects.create(user=request.user, following=author)
-            serializer = self.get_serializer(subscription)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=['post', 'delete'])
+    def subscribe(self, request, pk=None):
+        author = get_object_or_404(User, pk=pk)
         
-        subscription = Subscription.objects.filter(user=request.user, following=author)
-        if not subscription.exists():
+        if request.method == 'POST':
+            return self._subscribe(request.user, author)
+        elif request.method == 'DELETE':
+            return self._unsubscribe(request.user, author)
+
+    def _subscribe(self, user, author):
+        if user == author:
             return Response(
-                {'detail': 'Вы не подписаны на этого пользователя.'},
+                {"error": "You can't subscribe to yourself"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        subscription.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        if Subscription.objects.filter(user=user, author=author).exists():
+            return Response(
+                {"error": "Already subscribed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        subscription = Subscription.objects.create(user=user, author=author)
+        serializer = self.get_serializer(subscription)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _unsubscribe(self, user, author):
+        try:
+            subscription = Subscription.objects.get(user=user, author=author)
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
