@@ -4,9 +4,8 @@ from recipes.models import (
     Ingredient,
     Recipe,
     RecipeIngredient,
-    Favorite,
     ShoppingCart,
-    Subscription,
+    Subscription, Favorite 
 )
 from django.contrib.auth.hashers import make_password
 from drf_extra_fields.fields import Base64ImageField
@@ -112,13 +111,15 @@ class AvatarSerializer(serializers.Serializer):
     avatar = Base64ImageField(required=True)
 
     def update(self, instance, validated_data):
-        avatar_file = validated_data["avatar"]
+        avatar_file = validated_data.get("avatar")
 
-        if instance.avatar:
-            instance.avatar.delete()
+        if avatar_file:
+            if instance.avatar:
+                instance.avatar.delete(save=False)
+            filename = avatar_file.name if hasattr(
+                avatar_file, 'name') else 'avatar.png'
+            instance.avatar.save(filename, avatar_file, save=True)
 
-        instance.avatar.save(avatar_file.name, avatar_file, save=True)
-        instance.save()
         return instance
 
 

@@ -14,9 +14,8 @@ from recipes.models import (
     Ingredient,
     Recipe,
     RecipeIngredient,
-    Favorite,
     ShoppingCart,
-    Subscription
+    Subscription, Favorite 
 )
 from .serializers import (UserSerializer, IngredientSerializer,
                           RecipeSerializer, ShortRecipeSerializer,
@@ -92,13 +91,13 @@ class UserViewSet(viewsets.ModelViewSet):
             )
     
 
-
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields  = ('name',)
+    search_fields = ('name',) 
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
