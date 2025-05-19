@@ -25,21 +25,6 @@ def sample_user():
         password="testpass123"
     )
 
-@pytest.fixture
-def sample_ingredients():
-    return [
-        Ingredient.objects.create(name="Мука", measurement_unit="г"),
-        Ingredient.objects.create(name="Сахар", measurement_unit="г")
-    ]
-
-@pytest.fixture
-def sample_image():
-    return SimpleUploadedFile(
-        "test_image.jpg",
-        b"file_content",
-        content_type="image/jpeg"
-    )
-
 
 @pytest.fixture
 def sample_recipe(sample_user_api, sample_image):
