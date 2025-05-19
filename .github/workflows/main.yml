@@ -45,6 +45,7 @@ jobs:
         pip install -r ./backend/requirements.txt
         pip install pytest pytest-django
         pip install django-filter==23.1
+        pip install psycopg2-binary==2.9.3
     # Запускаем ruff
     - name: Lint with ruff and run django tests
       env:
