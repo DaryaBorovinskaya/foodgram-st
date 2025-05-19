@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-0l0cu9vr=h$79ekw93f7ce#!q7k*51$ao1e@^sg1n*o7sgmy(z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['backend', 'localhost']
 
 AUTH_USER_MODEL = 'users.User'
 # Application definition
@@ -133,7 +133,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
+
+# STATIC_ROOT = BASE_DIR / 'collected_static'
+
+STATIC_URL = '/backend_static/'
+STATIC_ROOT = '/backend_static/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -176,4 +182,5 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 MEDIA_URL = '/media/'
+# MEDIA_ROOT = '/app/media'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

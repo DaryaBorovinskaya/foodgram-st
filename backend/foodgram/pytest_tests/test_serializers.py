@@ -340,7 +340,14 @@ class TestAuthorSerializer:
     @pytest.mark.django_db
     def test_serialization(self, sample_user_api, base64_image):
         """Тест базовой сериализации автора."""
-        sample_user_api.avatar = base64_image
+        format, imgstr = base64_image.split(';base64,') 
+        ext = format.split('/')[-1]  
+        decoded_img = base64.b64decode(imgstr)
+        sample_user_api.avatar.save(
+            f"avatar_{sample_user_api.id}.{ext}",
+            ContentFile(decoded_img),
+            save=True
+        )
         sample_user_api.save()
         
         factory = APIRequestFactory()

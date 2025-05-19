@@ -7,7 +7,11 @@ from rest_framework.response import Response
 from .pagination import StandardPagination
 from rest_framework.permissions import IsAuthenticated
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import A4
 from io import BytesIO
+import matplotlib.font_manager as fm
 from rest_framework.permissions import AllowAny
 from recipes.models import (
     User,
@@ -24,7 +28,7 @@ from .serializers import (UserSerializer, IngredientSerializer,
 from .permissions import IsAuthorOrReadOnlyPermission
 
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django_filters import rest_framework as filtersSearchIngr
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -91,13 +95,22 @@ class UserViewSet(viewsets.ModelViewSet):
             )
     
 
+class IngredientFilter(filtersSearchIngr.FilterSet):
+    name = filtersSearchIngr.CharFilter(
+        field_name="name", lookup_expr="icontains")
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
+
+
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields  = ('name',)
-    search_fields = ('name',) 
+    filter_backends = (DjangoFilterBackend, )  # filters.SearchFilter)
+    filterset_class = IngredientFilter
+    # search_fields = ('name',) 
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -188,6 +201,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], 
             permission_classes=[permissions.IsAuthenticated])
     def download_shopping_cart(self, request):
+        font_path = fm.findfont("DejaVu Sans", fallback_to_default=True)
+        pdfmetrics.registerFont(TTFont('CyrillicFont', font_path))
+
         ingredients = RecipeIngredient.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
@@ -196,7 +212,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(total_amount=Sum('amount'))
 
         buffer = BytesIO()
-        p = canvas.Canvas(buffer)
+        p = canvas.Canvas(buffer, pagesize=A4)
+        p.setFont("CyrillicFont", 12)
+        
         y = 800
         p.drawString(100, y, "Список покупок:")
         y -= 30
@@ -207,6 +225,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                          f"({item['ingredient__measurement_unit']}) - "
                          f"{item['total_amount']}")
             y -= 20
+            if y < 50:  # Переход на новую страницу
+                p.showPage()
+                p.setFont("CyrillicFont", 12)
+                y = 800
 
         p.showPage()
         p.save()
