@@ -1,10 +1,8 @@
 import pytest
-from rest_framework.test import APIClient, APIRequestFactory
+from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.urls import reverse
-from recipes.models import Recipe, Favorite, ShoppingCart, Subscription
+from recipes.models import Favorite, ShoppingCart, Subscription
 
 User = get_user_model()
 

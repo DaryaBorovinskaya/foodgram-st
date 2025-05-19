@@ -10,7 +10,6 @@ from api.serializers import (UserSerializer, AvatarSerializer,
 from recipes.models import Subscription, Favorite, ShoppingCart, Recipe
 from users.models import User
 from rest_framework.test import APIRequestFactory, force_authenticate
-from django.core.files.uploadedfile import SimpleUploadedFile
 import os
 import base64
 from django.core.files.base import ContentFile

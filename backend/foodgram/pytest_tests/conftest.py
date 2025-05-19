@@ -5,7 +5,6 @@ from django.conf import settings
 from recipes.models import Ingredient, Recipe, ShoppingCart, Subscription
 from users.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth import get_user_model
 from rest_framework.test import APIRequestFactory
 
 
