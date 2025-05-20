@@ -33,7 +33,7 @@ class TestUserSerializer:
         assert data['username'] == "testuser"
         assert data['first_name'] == "Test"
         assert data['last_name'] == "User"
-        assert 'password' not in data  # Пароль write_only
+        assert 'password' not in data  
         assert data['is_subscribed'] is False
         assert 'avatar' in data
 

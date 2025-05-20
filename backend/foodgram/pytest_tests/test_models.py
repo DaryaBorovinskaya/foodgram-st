@@ -119,7 +119,7 @@ class TestRecipe:
         RecipeIngredient.objects.create(
             recipe=recipe,
             ingredient=sample_ingredients[0],
-            amount=200  # Обязательное поле!
+            amount=200 
         )
         RecipeIngredient.objects.create(
             recipe=recipe,
