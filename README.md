@@ -4,9 +4,13 @@
 ## Как запустить
 
 1. Клонирование репозитория
-```git clone https://github.com/DaryaBorovinskaya/foodgram-st.git```
+```
+git clone https://github.com/DaryaBorovinskaya/foodgram-st.git
+```
 
 2. Находясь в корневой директории проекта (foodgram-st), выполните команду:
-```docker compose up```
+```
+docker compose up
+```
 
 3. После запусков контейнеров сайт станет доступен по адресу http://localhost:8001/
