@@ -97,7 +97,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class IngredientFilter(filtersSearchIngr.FilterSet):
     name = filtersSearchIngr.CharFilter(
-        field_name="name", lookup_expr="icontains")
+        field_name="name", lookup_expr="istartswith")
 
     class Meta:
         model = Ingredient
