@@ -1,7 +1,9 @@
 import pytest
 from rest_framework.request import Request
 from rest_framework.exceptions import ValidationError
-from api.serializers import (UserSerializer, AvatarSerializer,
+from api.serializers import (UserSerializer,
+                             UserCreateSerializer,
+                             AvatarSerializer,
                              SetPasswordSerializer,
                              IngredientSerializer,
                              AuthorSerializer,
@@ -23,7 +25,7 @@ class TestUserSerializer:
     def test_serialization(self, sample_user_api, api_request):
         """Тест сериализации пользователя."""
         api_request.user = sample_user_api
-        serializer = UserSerializer(
+        serializer = UserCreateSerializer(
             instance=sample_user_api,
             context={'request': api_request}
         )
@@ -47,7 +49,7 @@ class TestUserSerializer:
             "last_name": "User",
             "password": "newpass123"
         }
-        serializer = UserSerializer(data=data)
+        serializer = UserCreateSerializer(data=data)
         assert serializer.is_valid()
         user = serializer.save()
         
@@ -67,7 +69,8 @@ class TestUserSerializer:
             "email": "new@example.com",
             # Пропущены username, first_name, last_name, password
         }
-        serializer = UserSerializer(data=data, context={'request': request})
+        serializer = UserCreateSerializer(
+            data=data, context={'request': request})
         assert not serializer.is_valid()
 
         errors = serializer.errors
@@ -138,7 +141,7 @@ class TestUserSerializer:
         factory = APIRequestFactory()
         request = factory.post('/')
         
-        serializer = UserSerializer(context={'request': request})
+        serializer = UserCreateSerializer(context={'request': request})
         
         assert serializer.fields['email'].required is True
         assert serializer.fields['username'].required is True
@@ -167,7 +170,7 @@ class TestUserSerializer:
         request = factory.post('/')
         request.user = sample_user_api  
         
-        serializer = UserSerializer(
+        serializer = UserCreateSerializer(
             instance=sample_user_api,
             context={'request': request}
         )
@@ -373,7 +376,7 @@ class TestAuthorSerializer:
     def test_is_subscribed_field_true(self, sample_user_api, another_user):
         """Тест поля is_subscribed (True случай)."""
         # Создаем подписку
-        Subscription.objects.create(user=sample_user_api, author=another_user)
+        Subscription.objects.create(user=another_user, author=sample_user_api)
         
         factory = APIRequestFactory()
         request = factory.get('/')
