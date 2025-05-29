@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 
+
+MAX_VALUE_POSITIVE_SMALL_INT = 32000
+MIN_VALUE_POSITIVE_SMALL_INT = 1
 
 User = get_user_model()
 
@@ -21,6 +25,7 @@ class Ingredient(models.Model):
                 name="unique_ingredient"
             )
         ]
+        ordering = ["name"]
 
     def __str__(self):
         return f"{self.name} ({self.measurement_unit})"
@@ -43,8 +48,12 @@ class Recipe(models.Model):
         through_fields=('recipe', 'ingredient'),
         verbose_name="Ингредиенты"
     )
-    cooking_time = models.PositiveIntegerField(
-        verbose_name="Время приготовления (мин)"
+    cooking_time = models.PositiveSmallIntegerField(
+        verbose_name="Время приготовления (мин)",
+        validators=[
+            MaxValueValidator(MAX_VALUE_POSITIVE_SMALL_INT),
+            MinValueValidator(MIN_VALUE_POSITIVE_SMALL_INT)
+        ]
     )
     pub_date = models.DateTimeField(
         auto_now_add=True, 
@@ -55,6 +64,7 @@ class Recipe(models.Model):
         ordering = ["-pub_date"]
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
+        
 
     def __str__(self):
         return self.name
@@ -79,7 +89,12 @@ class RecipeIngredient(models.Model):
         related_name="recipe_ingredients",
         verbose_name="Ингредиент",
     )
-    amount = models.PositiveIntegerField(verbose_name="Количество")
+    amount = models.PositiveSmallIntegerField(
+        verbose_name="Количество",
+        validators=[
+            MaxValueValidator(MAX_VALUE_POSITIVE_SMALL_INT),
+            MinValueValidator(MIN_VALUE_POSITIVE_SMALL_INT)
+        ])
 
     class Meta:
         verbose_name = "Ингредиент в рецепте"
@@ -90,6 +105,7 @@ class RecipeIngredient(models.Model):
                 name="unique_recipe_ingredient"
             )
         ]
+        ordering = ["recipe"]
 
     def __str__(self):
         return f" {self.recipe}: {self.ingredient} - {self.amount}"
@@ -117,6 +133,7 @@ class ShoppingCart(models.Model):
                 fields=["user", "recipe"], name="unique_shopping_cart"
             )
         ]
+        ordering = ["recipe"]
 
     def __str__(self):
         return f"{self.user} -> {self.recipe}"
@@ -143,6 +160,7 @@ class Favorite(models.Model):
             models.UniqueConstraint(fields=["user", "recipe"], 
                                     name="unique_favorite")
         ]
+        ordering = ["recipe"]
 
     def __str__(self):
         return f"{self.user} -> {self.recipe}"
@@ -169,6 +187,7 @@ class Subscription(models.Model):
                 fields=["user", "author"], name="unique_subscription"
             )
         ]
+        ordering = ["author"]
 
     def __str__(self):
         return f"{self.user} подписан на {self.author}"
