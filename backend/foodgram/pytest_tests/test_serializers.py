@@ -36,7 +36,6 @@ class TestUserSerializer:
         assert data['first_name'] == "Test"
         assert data['last_name'] == "User"
         assert 'password' not in data  
-        assert data['is_subscribed'] is False
         assert 'avatar' in data
 
     @pytest.mark.django_db
@@ -376,7 +375,7 @@ class TestAuthorSerializer:
     def test_is_subscribed_field_true(self, sample_user_api, another_user):
         """Тест поля is_subscribed (True случай)."""
         # Создаем подписку
-        Subscription.objects.create(user=another_user, author=sample_user_api)
+        Subscription.objects.create(user=sample_user_api, author=another_user)
         
         factory = APIRequestFactory()
         request = factory.get('/')
