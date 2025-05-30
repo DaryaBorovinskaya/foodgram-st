@@ -46,22 +46,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
             representation.pop("avatar", None)
         return representation
 
-    # def validate(self, data):
-    #     required_fields = [
-    #         "email",
-    #         "username",
-    #         "first_name",
-    #         "last_name",
-    #         "password",
-    #     ]
-    #     missing_fields = [field for field in required_fields
-    #                       if field not in data]
-    #     if missing_fields:
-    #         raise serializers.ValidationError(
-    #             {field: "Обязательное поле." for field in missing_fields}
-    #         )
-    #     return data
-
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data["password"])
         return super().create(validated_data)
@@ -107,99 +91,6 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.avatar and hasattr(obj.avatar, "url"):
             return obj.avatar.url
         return None
-
-# class UserSerializer(serializers.ModelSerializer):
-#     is_subscribed = serializers.SerializerMethodField()
-#     avatar = Base64ImageField(required=False, allow_null=True)
-
-#     class Meta:
-#         model = User
-#         fields = (
-#             "email",
-#             "id",
-#             "username",
-#             "first_name",
-#             "last_name",
-#             "password",
-#             "is_subscribed",
-#             "avatar",
-#         )
-#         extra_kwargs = {
-#             "password": {"write_only": True},
-#             "email": {"required": True},
-#             "first_name": {"required": True},
-#             "last_name": {"required": True},
-#         }
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#         request = self.context.get("request")
-#         if request and request.method == "POST":
-#             # При POST все поля обязательны
-#             self.fields["email"].required = True
-#             self.fields["username"].required = True
-#             self.fields["first_name"].required = True
-#             self.fields["last_name"].required = True
-#             self.fields["password"].required = True
-#         else:
-#             # При PUT/PATCH поля необязательны
-#             self.fields["email"].required = False
-#             self.fields["username"].required = False
-#             self.fields["first_name"].required = False
-#             self.fields["last_name"].required = False
-#             self.fields["password"].required = False
-
-#     def validate(self, data):
-#         request = self.context.get("request")
-#         if request and request.method == "POST":
-#             required_fields = [
-#                 "email",
-#                 "username",
-#                 "first_name",
-#                 "last_name",
-#                 "password",
-#             ]
-#             missing_fields = [field for field in required_fields if field not in data]
-#             if missing_fields:
-#                 raise serializers.ValidationError(
-#                     {field: "Обязательное поле." for field in missing_fields}
-#                 )
-#         return data
-
-#     def create(self, validated_data):
-#         # Хеширование пароля
-#         validated_data["password"] = make_password(validated_data["password"])
-#         return super().create(validated_data)
-
-#     def update(self, instance, validated_data):
-#         # Хеширование пароля
-#         if "password" in validated_data:
-#             instance.set_password(validated_data["password"])
-#             del validated_data["password"]
-#         return super().update(instance, validated_data)
-
-#     def get_is_subscribed(self, obj):
-#         request = self.context.get("request")
-#         if request and request.user.is_authenticated:
-#             return Subscription.objects.filter(
-#                 user=request.user, author=obj).exists()
-#         return False
-
-#     # Оформление вывода как в API-документации
-#     def to_representation(self, instance):
-#         representation = super().to_representation(instance)
-#         request = self.context.get("request")
-
-#         if request and request.method == "POST":
-#             representation.pop("is_subscribed", None)
-#             representation.pop("avatar", None)
-#         return representation
-
-#     def get_avatar(self, obj):
-#         if obj.avatar and hasattr(obj.avatar, "url"):
-#             return obj.avatar.url
-#         return None
 
 
 class AvatarSerializer(serializers.Serializer):
@@ -258,13 +149,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ("id", "name", "measurement_unit", "amount")
 
-    # def validate_amount(self, value):
-    #     if value < 1:
-    #         raise serializers.ValidationError(
-    #             "Количество ингредиента должно быть минимум 1."
-    #         )
-    #     return value
-
 
 class AuthorSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
@@ -320,13 +204,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             "is_favorited",
             "is_in_shopping_cart",
         )
-
-    # def validate_cooking_time(self, value):
-    #     if value <= 0:
-    #         raise serializers.ValidationError(
-    #             "Время приготовления должно быть больше нуля."
-    #         )
-    #     return value
 
     def validate_image(self, value):
         if not value:
